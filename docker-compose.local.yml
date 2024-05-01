@@ -1,0 +1,36 @@
+version: "3.4"
+
+services:
+  search_engine_db:
+    image: postgres:14.2
+    container_name: "search_engine_db"
+    hostname: "search_engine_db"
+    restart: always
+    volumes:
+      - ./postgres_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_PASSWORD: "searchengine"
+      POSTGRES_DB: "searchengine"
+      POSTGRES_USER: "searchengine"
+    ports:
+      - 5450:5432
+    networks:
+      app:
+
+
+  flyway:
+    hostname: "flyway"
+    build:
+      context: .
+      args:
+        FLYWAY_VERSION: 9.2.1
+      dockerfile: ./Dockerfile
+    command: -url=jdbc:postgresql://search_engine_db:5432/searchengine -user=searchengine -password=searchengine -schemas=public -connectRetries=60 migrate
+    networks:
+      app:
+    depends_on:
+      - search_engine_db
+
+networks:
+  app:
+    driver: bridge
